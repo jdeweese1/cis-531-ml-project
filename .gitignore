@@ -1,0 +1,8 @@
+.ipynb_checkpoints/*
+*.csv
+classif_reports/test/*.txt
+classif_reports/train/*.txt
+plots/test/*.png
+plots/train/*.png
+*.tex
+*.aux
