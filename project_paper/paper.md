@@ -94,8 +94,7 @@ hateful & 1881 & 4.44\% \tabularnewline
 
    6. Compound Sentiment Score
 
-5. SMOTE-y data selection
-
+5. Adjust for class imbalance
     Because there was such a wide class imbalance, I chose a roughly equivalant number of records from each of the 3 classes to train on.
 
 6. ML
@@ -104,7 +103,7 @@ hateful & 1881 & 4.44\% \tabularnewline
 
 7. Grid search for parameters
 
-[^my_repo_url]: TODO ADD MY GITHUB URL HERE
+[^my_repo_url]: [https://github.com/jdeweese1/cis-531-ml-project](https://github.com/jdeweese1/cis-531-ml-project)
 
 # Evaluation
 

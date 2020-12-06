@@ -1,12 +1,5 @@
 # %% md
 
-'''< a
-href = "https://colab.research.google.com/github/jdeweese1/CIS_531_Projects/blob/main/term_project/scripts/playground.ipynb"
-target = "_parent" > < img
-src = "https://colab.research.google.com/assets/colab-badge.svg"
-alt = "Open In Colab" / > < / a >
-'''
-
 import datetime
 import os
 import re

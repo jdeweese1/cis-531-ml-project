@@ -6,3 +6,5 @@ plots/test/*.png
 plots/train/*.png
 *.tex
 *.aux
+.env
+.envrc
