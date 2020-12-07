@@ -6,9 +6,9 @@ author: "Jarod DeWeese"
 
 # Introduction
 
-The rise of social media has facilitated connection and engagement between people like never before. Unfortunately, these mediums also allow for hateful and offensive language to proliferate, often at the expensive of marginilized communties that may use such platforms as a main way to connect with those of similar backgrounds. This report focuses on identifying hate speech in social media settings.  (@auto_hate_speech). Using NLP methods and Machine Learning models, we can work towards automating this categorization.
+The rise of social media has facilitated connection and engagement between people like never before. Unfortunately, these mediums also allow for hateful and offensive language to proliferate, often at the expense of marginalized communities that may use such platforms as a main way to connect with those of similar backgrounds. This report focuses on identifying hate speech in social media settings.  (@auto_hate_speech). Using NLP methods and Machine Learning models, we can work towards automating this categorization.
 
-I was inspired to choose this project after our university diversity event was disrupted by members of an organization that spammed our meetings with hate speech. A friend of mine was targeted by and deeply impacted by the hateful speech that occured during that event.
+I was inspired to choose this project after our university diversity event was disrupted by members of an organization that spammed our meetings with hate speech. A friend of mine was targeted by and deeply impacted by the hateful speech that occurred during that event.
 
 # Related Work
 
@@ -65,28 +65,28 @@ hateful & 1881 & 4.44\% \tabularnewline
 
 # Methodology
 
-1. Obtain pre-annotated ID dataset
+1. __Obtain pre-annotated ID dataset__
+I first downloaded the dataset from the source, but this dataset only contained the tweet ID and coding value. 
 
-   1. I first downloaded the dataset from the source, but this dataset only contained the tweet ID and coding value. 
+2. __Preprocessing: Obtain actual tweet information [^my_repo_url]__
+Grab the corresponding tweets, using the Twitter API. Features obtained from this step include: Tweet author, text, time the Tweet was sent and other basic information.
 
-2. Preprocessing: Obtain actual tweet information [^my_repo_url]
-
-   1. Grab the corresponding tweets, using the Twitter API. Features obtained from this step include: Tweet author, text, time the Tweet was sent and other basic information.
-
-3. Clean data in the pipeline
+3. __Clean data in the pipeline__
 
    - Replace mentions, URLS, hashtags, etc
    - Fix encoding irregularities
    - Fix hanging whitespace
    - Remove emojis, and put them in their own column of the DataFrame
 
-4. Feature selection
+4. __Feature selection__
 
-   1. TFIDF matrix of vocabulary
+   1. TFIDF matrix of vocabulary - 3000 features
 
-   2. TFIDF of POS
+   2. TFIDF of POS - 2000 features
    
-   3. TFIDF of characters
+   3. TFIDF of characters - 3000 features
+   
+   4. Count of kind of emojis - 200 features
 
    4. Number of people the tweet had mentioned
 
@@ -94,14 +94,15 @@ hateful & 1881 & 4.44\% \tabularnewline
 
    6. Compound Sentiment Score
 
-5. Adjust for class imbalance
-    Because there was such a wide class imbalance, I chose a roughly equivalant number of records from each of the 3 classes to train on.
+5. __Adjust for class imbalance__
+Because there was such a wide class imbalance, I chose a roughly equivalant number of records from each of the 3 classes to train on.
 
-6. ML
+6. __Models__
+LinearSVC and LogisticRegression proved to be the most reliable for this application. I trained the model using roughly 5,000 features per Tweet, after considering the TFIDF matrices features. After some research, I believe that LR works best for my use case. However there may be other ML models I did not come across. Although using neural engines were initially considered, the time, knowledge, and resources required to train these proved to not be feasible for the constraints of my research.
 
-   LinearSVC and LogisticRegression proved to be the most reliable for this application. I trained the model using roughly 5,000 features per Tweet, after considering the TFIDF matrices features. After some research, I believe that LR works best for my use case.
+7. __Grid search for parameters__
 
-7. Grid search for parameters
+Initially, I used a Jupyter Notebook in Google Colab as the runtime for this project. However, I soon became frustrated with the debugging limitations of the environment, so I briefly used Jetbrain's Datalore and Databricks. In the end, I ended up just running my code as a Python program on my local machine, as it allowed me to most easily examine my runtime environment, and run specific blocks of code in a non-linear way.
 
 [^my_repo_url]: [https://github.com/jdeweese1/cis-531-ml-project](https://github.com/jdeweese1/cis-531-ml-project)
 
@@ -140,10 +141,6 @@ TODO INCLUDE chars vs no chars
 
 <!-- TODO INCLUDE BINARY CLASSIFICATION, instead of 3class -->
 
-### What I hope to get done between now and final project submission
-
-Between now and the final project submission, I hope to be able to clean a few more data irregularities that I am experiencing, use GridSearch to better tune my parameters for my models, explore using a binary classification system instead of using the 3 class approach I'm doing now, and see if the trade-offs are worth it. I may also create a word cloud, or do further analytics on trends with these tweets.
-I also need to fix the formatting in this document, and make sure it adheres to AAAI standards.
 
 # Conclusion
 
