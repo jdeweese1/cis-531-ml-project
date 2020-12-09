@@ -6,35 +6,34 @@ author: "Jarod DeWeese"
 
 # Introduction
 
-The rise of social media has facilitated connection and engagement between people like never before. Unfortunately, these mediums also allow for hateful and offensive language to proliferate, often at the expense of marginalized communities that may use such platforms as a main way to connect with those of similar backgrounds. This report focuses on identifying hate speech in social media settings.  (@auto_hate_speech). Using NLP methods and Machine Learning models, we can work towards automating this categorization.
+The rise of social media has facilitated connections and engagement between people like never before. Unfortunately, these mediums also allow for hateful and offensive language to proliferate, often at the expense of marginalized communities who use such platforms as the main way to connect with those of similar backgrounds. This report focuses on identifying hate speech in social media settings.  (@auto_hate_speech). Using NLP methods and Machine Learning models, this paper aims to automate this categorization.
 
-I was inspired to choose this project after our university diversity event was disrupted by members of an organization that spammed our meetings with hate speech. A friend of mine was targeted by and deeply impacted by the hateful speech that occurred during that event.
+I was inspired to choose this project after a university diversity event was disrupted by members of an organization that spammed the meetings with hate speech. A friend of mine was targeted by and deeply impacted by the hateful speech that occurred during the event.
 
 # Related Work
 
-To famialarize myself with this issue, and the work already done in the area, I looked at many papers and code snippets out there already:
+To gain familiarity with this issue, several preexisting papers and repositories were reviewed.
+
+In @auto_hate_speech, the authors explain the legal implications of hateful speech in various parts of the world, as well as explaining how and why certain kinds of hateful speech are more likely to be seen as just offensive, but not hateful. This may exist for any number of reasons, including but not limited to cultural norms, bias, etc. Additionally, they explain that while looking solely for offensive words may initially make it easier to identify hate speech, this naive approach may ultimately be less effective. This is true especially for documents hateful documents that do not explicitly use those terms.
 
 
-In @auto_hate_speech, the authors explain legal implications of hateful speech in parts of the world, as well as explaining how and why certain kinds of hateful speech are more likely to be seen as just offensive, but not hateful. Additionally, they explain that while just looking for offensive words may initially make it easier to identifiy hate speech, it can make it harder to identify hate speech that does not specifically use those terms.
+I found @racial_bias_2019 which shares 2 authors with @auto_hate_speech. The paper specifically focuses on the racial bias as it exists in datasets and models. They found that because of this bias, models are more likely to predict that tweets authored by a community are hateful **towards their own community**. As discussed in the paper, this could result in victims being penalized for speaking out, potentially silencing the very communities that are using these platforms to speak out. This phenomenon could be partly explained by the reclamation of words, and the specific vernacular a group may use within their community.
 
+@hateful_symbols went into detail explaining why using character n-grams can be useful for this task, especially in conjunction or as a replacement of a word n-gram approach. This paper identified which of these character n-grams were most likely to indicate certain types of offensive speech.
 
-I found @racial_bias_2019 which shares 2 authors with @auto_hate_speech. This paper specifically focuses on racial bias as it exists in datasets and models. This paper found that because of this bias, models are more likely to predict that tweets authored by a community are hateful **towards their own community**. As discussed in the paper, this could result in victims being penalized for speaking out, potentially silencing the very communties that are using these platforms to speak out. This phenomenon could be partly explained by reclamation of words, and specific vernacular a group may use within their community.
+Hate speech is defined as  "that it is speech that targets disadvantaged social groups in a manner that is potentially harmful to them" as used in @auto_hate_speech.
 
-@hateful_symbols went into detail explaining why using character n-grams can be useful, and in conjunction or in replacement of a word n-gram approach. What's more, this paper identified which of these character n-grams were most likely to indicate certain types of offensive speech.
+Unsophisticated algorithms may act unfavorably to those groups who are the victims of hate speech. (@racial_bias_2019). This bias is important to acknowledge and work to resolve, particularly in systems that may affect real people.
 
-- For the purposes of this project, we use the definition used by @auto_hate_speech: "that it is speech that targets disadvantaged social groups in a manner that is potentially harmful to them"
-
-Unsophisticated algorithms may actually act unfavorably to those groups who are the victims of hate speech. (@racial_bias_2019)
-
-  Of the literature I reviewed that focused on automatic classification of this speech online, many found that Logistic Regression proved to be consistently effective at determining whether or not a Tweet is hate speech. Specifically, @auto_hate_speech used uni, bi and trigrams of vocabulary and Part of Speech tagged features, as well as counts for urls, mentions etc. 
+Of the literature reviewed that focused on automatic classification of this speech online, many authors found that Logistic Regression proved to be consistently effective at determining whether or not a Tweet is hate speech. Specifically, @auto_hate_speech used uni, bi, and trigrams of vocabulary and Part of Speech tagged features, as well as counts for URLs, mentions.
 
 # Dataset
 
-The dataset I used for this project consisted of two columns: tweet id and coded value. [^datafoot] Original dataset had 80,000 entries, but of those, only the contents of 63,708 could be reached using the Twitter API
+The dataset used for this project consists of two columns: tweet id and coded value. [^datafoot] The original dataset had 80,000 entries, but of those, only the contents of 63,700 entries could be accessed using the Twitter API.
 
 [^datafoot]: The dataset is available here: https://dataverse.mpi-sws.org/dataset.xhtml?persistentId=doi:10.5072/FK2/ZDTEMN
 
-The following is an exerpt from the data: (@data_cite)
+The following is an excerpt from the data: (@data_cite)
 
 \begin{tabular}{|c|c|c|}
 \hline 
@@ -66,91 +65,72 @@ hateful & 1881 & 4.44\% \tabularnewline
 # Methodology
 
 1. __Obtain pre-annotated ID dataset__
-I first downloaded the dataset from the source, but this dataset only contained the tweet ID and coding value. 
+The dataset was downloaded from the source, but this dataset only contained the tweet ID and coding value. 
 
 2. __Preprocessing: Obtain actual tweet information [^my_repo_url]__
-Grab the corresponding tweets, using the Twitter API. Features obtained from this step include: Tweet author, text, time the Tweet was sent and other basic information.
+Grab the corresponding tweets, using the Twitter API. Features obtained from this step include Tweet author, author id, text, time the Tweet was authored, if it was in reply to another conversation, and the follower count of the author.
 
 3. __Clean data in the pipeline__
 
-   - Replace mentions, URLS, hashtags, etc
+   - Replace mentions, URLs, hashtags
    - Fix encoding irregularities
-   - Fix hanging whitespace
-   - Remove emojis, and put them in their own column of the DataFrame
+   - Normalize whitespace
+   - Decode emojis
+   - Lowercase resulting text  
 
 4. __Feature selection__
+After reviewing existing literature, the following features were extracted.
 
-   1. TFIDF matrix of vocabulary - 3000 features
+   1. TFIDF matrix of vocabulary
 
-   2. TFIDF of POS - 2000 features
+   2. TFIDF of POS
    
-   3. TFIDF of characters - 3000 features
+   3. TFIDF of characters
    
-   4. Count of kind of emojis - 200 features
+   4. Count of kind of emojis used if any
 
-   4. Number of people the tweet had mentioned
+   4. Number of users the tweet had mentioned
 
    5. Flesch reading ease score
 
    6. Compound Sentiment Score
 
 5. __Adjust for class imbalance__
-Because there was such a wide class imbalance, I chose a roughly equivalant number of records from each of the 3 classes to train on.
+Because there was such a wide class imbalance, a roughly equivalent number of records was chosen from each of the 3 classes to train on.
 
 6. __Models__
-LinearSVC and LogisticRegression proved to be the most reliable for this application. I trained the model using roughly 5,000 features per Tweet, after considering the TFIDF matrices features. After some research, I believe that LR works best for my use case. However there may be other ML models I did not come across. Although using neural engines were initially considered, the time, knowledge, and resources required to train these proved to not be feasible for the constraints of my research.
+LinearSVC and LogisticRegression proved to be the most reliable for this application. Each model using roughly 5,000 features per Tweet, after considering the TFIDF matrices features. However, there may be other well-performing models not in the reviewed literature. Although using neural engines were initially considered, the time, knowledge, and resources required to train these proved to not be feasible for the constraints of this project.
 
 7. __Grid search for parameters__
+After finding the models that were generally most effective, they were optimized using a grid search algorithm, using the total f1 score as the evaluation metric.
 
-Initially, I used a Jupyter Notebook in Google Colab as the runtime for this project. However, I soon became frustrated with the debugging limitations of the environment, so I briefly used Jetbrain's Datalore and Databricks. In the end, I ended up just running my code as a Python program on my local machine, as it allowed me to most easily examine my runtime environment, and run specific blocks of code in a non-linear way.
+Initially, a  Jupyter Notebook in Google Colab as the runtime was used for this project. However, this approach soon became limiting with the debugging limitations of the environment, so other platforms were briefly used. In the end, the code ended up just running as a simple Python program on a local machine, as it allowed for easy examination of the runtime environment, and run specific blocks of code in a non-linear way.
 
 [^my_repo_url]: [https://github.com/jdeweese1/cis-531-ml-project](https://github.com/jdeweese1/cis-531-ml-project)
 
 # Evaluation
 
-Because there is such wide class imbalance in the real world with only about 5% of Tweets being hateful, and 10% being abusive it would be important that our model doesn't incorrectly tag normal tweets as abusive or hateful. If the model does incorrectly misclassify large portions of the normal tweets, a moderator or support staff may entirely abandon the system. My baseline for comparison is the metrics mentioned in @auto_hate_speech: "overall precision 0.91, recall of 0.90, and F1 score of 0.90", "the precision and recall scores for the hate class are 0.44 and 0.61 respectively" This is the baseline to which I will compare my results. If I can get a precision even close to .8 I would be very happy.
+Because there is such a wide class imbalance in the real world with only about 5% of Tweets being hateful, and 10% being abusive it is important that a production model doesn't incorrectly tag normal tweets as abusive or hateful. The baseline for comparison is the metrics mentioned in @auto_hate_speech: "overall precision 0.91, recall of 0.90, and F1 score of 0.90", "the precision and recall scores for the hate class are 0.44 and 0.61 respectively" This is the baseline to which results will be compared. If the model achieves an overall precision and recall above .8, it shall be considered successful.
 
 # Results
+Below see the best 3-class confusion matrix, and it's corresponding classification report:
+![Confusion Matrix for best 3-class](/Users/jaroddeweese/Library/Mobile Documents/com~apple~CloudDocs/Documents/School/CIS531/CIS_531_Projects/term_project/scripts/plots/test_unsmoted_norm_to_true/plotLogisticRegression_tweet_coding_cleaned_no_flags_base_lr_with_char.png)
+![Classification report normalized by Truth value (each row adds to 1)](/Users/jaroddeweese/Library/Mobile Documents/com~apple~CloudDocs/Documents/School/CIS531/CIS_531_Projects/term_project/scripts/classif_reports/test_unsmoted/screen_shot_classif_report.png)
 
-No part of speech
+Below see the best 2-class confusion matrix, and it's corresponding classification report:
+![Confusion Matrix for best 2-class](/Users/jaroddeweese/Library/Mobile Documents/com~apple~CloudDocs/Documents/School/CIS531/CIS_531_Projects/term_project/scripts/plots/test_unsmoted_norm_to_true/plotLinearSVC_binary_class_cleaned_no_flags_hinge_i_10000_with_char.png)
+![Best binary classification report](/Users/jaroddeweese/Library/Mobile Documents/com~apple~CloudDocs/Documents/School/CIS531/CIS_531_Projects/term_project/scripts/classif_reports/test_unsmoted/best_binary.png)
 
-TODO INCLUDE non POS TAGGED RESULTS, AND COMPARED TO THE POS TAGGED
+As you can see from the figures, the best performing models performed at an overall level consistent with that of @auto_hate_speech, and on par with the initial goals of this project. However, it is important to point out that even the best model misclassified, 66% of hate speech, 21% of abusive speech, and 15% of normal speech. Somewhat unintuitively, the next best model (2-class) only misclassified 15% of unpleasant speech and misclassified 27% of normal speech. This pattern was consistent for all 3-class models compared with their 2-class siblings.
 
-TODO INCLUDE chars vs no chars
-
-
-
-## POS tagged confusion matrices
-
-<!-- TODO symlink directories to auto-enclude other files on build-->
-
-![plotLinearSVC_tweet_coding_cleaned_no_flags_hinge_i_10000](../plots/test/plotLinearSVC_tweet_coding_cleaned_no_flags_hinge_i_10000.png)
-
-
-
-### Classification report for SVC
-
-!include reportLinearSVC_tweet_coding_cleaned_no_flags_hinge_i_10000.md
-
-![plotLinearSVC_tweet_coding_cleaned_no_flags_hinge_i_10000](../plots/test/plotLogisticRegression_tweet_coding_cleaned_no_flags_base_lr.png)
-
-
-### Classification report for LR
-
-!include ../classif_reports/test/reportLogisticRegression_binary_class_cleaned_no_flags_base_lr.md
-
-<!-- TODO INCLUDE BINARY CLASSIFICATION, instead of 3class -->
-
+For multi-class with SVC model, more iterations hurt performance, however for a 2-class dataset, it improved performance, but at the expense of recall for the unpleasant tweets.
 
 # Conclusion
+While the models showcased can boast respectable f1 scores, they should be interpreted with context. Specifically, because of the wide class imbalance that exists in the dataset (and reality), as long as the model's test data is similarly skewed, and somewhat accurately classifies the normal class, the weighted f1 score gets pulled up with it.
 
-So far I have a working model, that performs decently well. I also have some of the infrastructure in place to auto-tune parameters via GridSearch, and dump metrics into the file system for me to examine. I was originally hoping that maybe I could deploy this somewhere and be able to read in real time tweet replies to people that are known to be targets of hate speech, and implement something like the GoodnessBot [^goodness_bot] that exists on Twitter.
+To partially remedy this issue, if the hateful and abusive classes can be consolidated, creating only a 2-class system, model performance can be boosted. However, even in this case, the ratio between nice tweets and unpleasant tweets exists in a ratio of 5 to 1. However, the use case should be carefully considered before deciding to consolidate classes.
 
-Because of reasons discussed in @racial_bias_2019, these results should be interpreted with context, and understanding of the inherent bias that exists in data collection, annotation, modeling, and context to cultural norms.
-
-I hope to be able to do more work to find which subset of features are most effective for classifying hate speech.
-
-[^goodness_bot]: [https://twitter.com/GoodnessBot/](https://twitter.com/GoodnessBot/)
+Furthermore, because of the reasons discussed in @racial_bias_2019, these results should be interpreted with context, and understanding of the inherent bias that exists in data collection, annotation, modeling, and context to cultural norms.
 
 # Acknowledgements
 
@@ -158,5 +138,6 @@ I hope to be able to do more work to find which subset of features are most effe
 
 - https://miki725.com/2019/10/15/markdown-to-pdf-ieee.html
 - @math_father_586 whose code helped to provided useful code samples of how the techniques discussed in the research can be implemented with real model code.
+- Emily Davich, who helped to proofread this paper.
 
 # References
