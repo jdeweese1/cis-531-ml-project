@@ -8,3 +8,4 @@ plots/train/*.png
 *.aux
 .env
 .envrc
+debug/
