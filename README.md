@@ -17,7 +17,7 @@ tweepy
 ```
 You should be able to run a command like `$ pipenv install ` and have your installer tool install from the `Pipfile`. Your milage may vary depending on your machine and local Python environment.
 
-Obtain the [data](https://dataverse.mpi-sws.org/dataset.xhtml?persistentId=doi:10.5072/FK2/ZDTEMN). To run the program, you will need to fix 3 errors that will prompt you to input some variables, specific to your system and data. This would be you input file, and the keys for Twitter. Run the `twitter_extractor.py` program to obtain tweet text and other details.
+Obtain the [data](https://dataverse.mpi-sws.org/dataset.xhtml?persistentId=doi:10.5072/FK2/ZDTEMN). If you are my TA, then you can also find the relevant data in the comments section of the canvas submission. To run the program, you will need to fix 3 errors that will prompt you to input some variables, specific to your system and data. This would be you input file, and the keys for Twitter. Run the `twitter_extractor.py` program to obtain tweet text and other details.
 
 Run main_ml.py
 Inside `main_ml.py` you should see a section in there in the top 60 lines, where configuration variables can be set. This program expects the input file from the last step to be called `outfile.csv` This changes what kind of features the program uses to bulid the models. 
