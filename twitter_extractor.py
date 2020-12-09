@@ -7,19 +7,28 @@ import tweepy
 from tweepy.api import API
 
 # input_data_path = '/Users/jaroddeweese/Library/Mobile Documents/com~apple~CloudDocs/Documents/School/CIS531/CIS_531_Projects/term_project/academic_literature/Large Scale Crowdsourcing and Characterization of Twitter Abusive Behavior/dataverse_files/hatespeech_chunk_begin_removed.csv'
-input_data_path = 'my_normal_tweets.csv'
-outfile = 'my_tweets_out.csv'
+# input_data_path = 'my_normal_tweets.csv'
+
+def err_for_input():
+    raise RuntimeError('Please specify input data path in source code')
+
+def err_for_key():
+    raise RuntimeError('Please specify the key via environment var or in source code')
+
+input_data_path = err_for_input()
+outfile = 'outfile.csv'
 
 pd_df = pandas.read_csv(input_data_path)
 print(pd_df.dtypes)
 e = os.environ
 
-auth = tweepy.auth.OAuthHandler(consumer_key=e['CONSUMER_KEY'], consumer_secret=e['CONSUMER_SECRET'])
+auth = tweepy.auth.OAuthHandler(consumer_key=e.get('CONSUMER_KEY', err_for_key()), consumer_secret=e.get('CONSUMER_SECRET', err_for_key()))
 
 client = API(auth_handler=auth)
 
 
 def get_chunks_of_n(n):
+    # If I was doing this again i would have used more_itertools.chunked, but this is already written
     counter = count()
     rows = pd_df.iterrows()
     res = []
