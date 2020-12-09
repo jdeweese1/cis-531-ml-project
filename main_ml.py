@@ -1,12 +1,10 @@
 # %% md
 
 import datetime
-import os
 import re
 from collections import Counter
-from pathlib import Path
 from statistics import mean
-from typing import Any, List, NoReturn
+from typing import List, NoReturn
 
 import emojis
 import matplotlib.pyplot as plt
@@ -26,19 +24,39 @@ from sklearn.metrics import classification_report, plot_confusion_matrix
 from sklearn.svm import LinearSVC
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as VS
 
-NOT_NICE_TWEET_CODING = 'unpleasant'
+import os
+from pathlib import Path
 
+
+debug_dir = Path('debug')
+if not os.path.exists(debug_dir.absolute()):
+    os.makedirs(debug_dir)
+
+NOT_NICE_TWEET_CODING = 'unpleasant'
 NICE_TWEET_CODING = 'nice'
 
 NORMAL_FLAG = 'normal'
 ABUSIVE_FLAG = 'abusive'
 HATEFUL_FLAG = 'hateful'
 
+ALL_NORMALIZE_SETTINGS = ['pred', 'true', 'all']
+
+#%% Begin section to mess with settings
 WRITE_DEBUG_FILES = True
-NORMALIZE_SETTING = 'all'
+
+# Begin feature selection settings
+SELECTIVELY_SAMPLE_TEST_SLICE = False
 tfidf_text_colmun_name = 'cleaned_no_flags'
-result_column = 'tweet_coding'
-# result_column = 'binary_class'
+#tfidf_text_colmun_name = 'cleaned_tweet'
+
+USE_VOCAB_TFIDF = True
+USE_TFIDF_EMOJI = True
+USE_POS_TAG = True
+USE_CHAR_TFIDF = True
+
+# result_column = 'tweet_coding' # use 3 class
+result_column = 'binary_class' # use 2 class
+
 if result_column == 'tweet_coding':
     LABEL_LIST = [NORMAL_FLAG, ABUSIVE_FLAG, HATEFUL_FLAG]
 elif result_column == 'binary_class':
@@ -52,24 +70,6 @@ nltk.download('averaged_perceptron_tagger')
 
 
 print(datetime.datetime.now())
-
-# %%
-
-# from google.colab import
-'''!wget - O
-my_tweets_out.csv
-https: // www.dropbox.com / s / hlv14n6pxciqhbc / my_tweets_out.csv?dl = 0 - o
-logfile.txt
-!wget - O
-outfile.csv
-https: // www.dropbox.com / s / 220
-nwybpraipb41 / outfile.csv?dl = 0 - o
-logfile.txt
-!wget - O
-my_normal.csv
-https: // www.dropbox.com / s / ber6n2zfef99x9h / my_normal_tweets.csv?dl = 0 - o
-logfile.txt'''
-
 
 # %%
 
@@ -117,7 +117,7 @@ def annotate_col_parts_of_speech(df_to_annotate: DataFrame, input_col: str = tfi
 sent_anlr = VS()
 
 
-def smoted_df_slice(df: DataFrame) -> DataFrame:
+def balance_df_slice(df: DataFrame) -> DataFrame:
     abusive = df[df['tweet_coding'] == ABUSIVE_FLAG].sample(frac=.9)
     hateful = df[df['tweet_coding'] == 'hateful'].sample(frac=.9)
     normals_to_grab = int(mean([len(abusive), len(hateful)]))
@@ -125,7 +125,7 @@ def smoted_df_slice(df: DataFrame) -> DataFrame:
     return pd.concat([abusive, hateful, normal]).reindex()
 
 
-train_df_slice = smoted_df_slice(og_df)
+train_df_slice = balance_df_slice(og_df)
 
 
 mention_flag = 'USER_MENTION'
@@ -226,10 +226,13 @@ def compute_tweet_features(df_to_clean: DataFrame):
 
 train_df_slice = compute_tweet_features(train_df_slice)
 
-train_df_slice[['tweet_text', 'cleaned_tweet', 'cleaned_no_flags']].to_csv('trained_cleaned.csv')
-
+train_df_slice[['tweet_text', 'cleaned_tweet', 'cleaned_no_flags']].to_csv(debug_dir.joinpath( 'trained_cleaned.csv'))
+#%%
 # Grab use those items not in the train slice to test
-test_slice = smoted_df_slice(og_df.drop(train_df_slice.index))
+if SELECTIVELY_SAMPLE_TEST_SLICE:
+    test_slice = balance_df_slice(og_df.drop(train_df_slice.index))
+else:
+    test_slice = og_df.drop(train_df_slice.index)
 print(len(test_slice))
 
 print(f'annotating og df_to_annotate this may take a moment len {len(og_df)}')
@@ -288,14 +291,24 @@ pos_vectorizer = TfidfVectorizer(
 
 
 def get_features(tf_idf_word_vectorizer, tf_idf_char_vectorizer, pos_sent_vectorizer, emoji_vectorizer, df) -> np.array:
+    feature_vectors = []
     other_features = np.array(
         [df['num_mentioning'].to_numpy(), df['flesch_score'].to_numpy(), df['sentiment_score'].to_numpy()]).transpose()
+    if USE_VOCAB_TFIDF:
+        tfidf_vocab_vec = tf_idf_word_vectorizer.transform(df[tfidf_text_colmun_name])
+        feature_vectors.append(tfidf_vocab_vec)
+    if USE_CHAR_TFIDF:
+        tfidf_char_vec = tf_idf_char_vectorizer.transform(df[tfidf_text_colmun_name])
+        feature_vectors.append(tfidf_char_vec)
+    if USE_POS_TAG:
+        tfidf_pos_vec = pos_sent_vectorizer.transform(df['pos_sentence'])
+        feature_vectors.append(tfidf_pos_vec)
 
-    tfidf_vocab_vec = tf_idf_word_vectorizer.transform(df[tfidf_text_colmun_name])
-    tfidf_char_vec = tf_idf_char_vectorizer.transform(df[tfidf_text_colmun_name])
-    tfidf_pos_vec = pos_sent_vectorizer.transform(df['pos_sentence'])
-    tfidf_emoji = emoji_vectorizer.transform(df['emojis'])
-    stacked = hstack([tfidf_vocab_vec, tfidf_char_vec, tfidf_pos_vec, other_features, tfidf_emoji])
+    if USE_TFIDF_EMOJI:
+        tfidf_emoji = emoji_vectorizer.transform(df['emojis'])
+        feature_vectors.append(tfidf_emoji)
+
+    stacked = hstack(feature_vectors)
     return stacked
 
 
@@ -333,15 +346,21 @@ print('model(s) trained')
 # %%
 
 
-def make_plot_file_name(data_mode, tag) -> Path:
-    dir_path = f'./plots/{data_mode}/'
+def make_plot_file_name(data_mode, tag, normalized_to) -> Path:
+    smote_desc = get_smote_status()
+    dir_path = f'./plots/{data_mode}_{smote_desc}_norm_to_{normalized_to}/'
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
     return Path(f'{dir_path}plot{mdl_name}_{result_column}_{tfidf_text_colmun_name}_{tag}.png')
 
 
+def get_smote_status():
+    smote_desc = 'smoted' if SELECTIVELY_SAMPLE_TEST_SLICE else 'unsmoted'
+    return smote_desc
+
+
 def make_classification_report_file_path(data_mode, tag) -> Path:
-    dir_path = f'./classif_reports/{data_mode}/'
+    dir_path = f'./classif_reports/{data_mode}_{get_smote_status()}/'
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
     return Path(f'{dir_path}report{mdl_name}_{result_column}_{tfidf_text_colmun_name}_{tag}.txt')
@@ -377,23 +396,25 @@ for model, tag in models_and_tags:
         rel_cols = mis_cat[cols]
         # print(rel_cols)
 
-        rel_cols.to_csv('mis_cat.csv')
-        mis_cat.query('predicted == @ABUSIVE_FLAG & @result_column == @NORMAL_FLAG').to_csv('p_abuse_a_normal.csv')
-        mis_cat.query('predicted != @NORMAL_FLAG & @result_column == @NORMAL_FLAG').to_csv('a_normal_p_-.csv')
-        mis_cat.query('predicted != @HATEFUL_FLAG & @result_column == @HATEFUL_FLAG')[cols].to_csv(
-            'a_hateful_miscat.csv')
+        rel_cols.to_csv(debug_dir.joinpath('mis_cat.csv'))
+        mis_cat.query('predicted == @ABUSIVE_FLAG & @result_column == @NORMAL_FLAG').to_csv(debug_dir.joinpath( 'p_abuse_a_normal.csv'))
+        mis_cat.query('predicted != @NORMAL_FLAG & @result_column == @NORMAL_FLAG').to_csv(debug_dir.joinpath( 'a_normal_p_-.csv'))
+        mis_cat.query('predicted != @HATEFUL_FLAG & @result_column == @HATEFUL_FLAG')[cols].to_csv(debug_dir.joinpath( 'a_hateful_miscat.csv'))
 
-    conf_matrix_plt = plot_confusion_matrix(estimator=model, X=test_features_x, y_true=y_test, normalize=NORMALIZE_SETTING, labels=LABEL_LIST)
+
     mdl_name = model.__class__.__name__
     print('-' * 16)
     print(mdl_name, tag)
-    plt.title(f'Confusion matrix {mdl_name} {NORMALIZE_SETTING}test data')
-    plot_file_name: Path = make_plot_file_name('test', tag)
-    plot_full_path = plot_file_name.absolute().__str__()
-    figure_file.write(f'![{plot_full_path}]({plot_full_path})')
+    for normalize_setting in ALL_NORMALIZE_SETTINGS:
+        conf_matrix_plt = plot_confusion_matrix(estimator=model, X=test_features_x, y_true=y_test,
+                                                normalize=normalize_setting, labels=LABEL_LIST)
+        plt.title(f'Confusion matrix {mdl_name} {normalize_setting}_test data')
+        plot_file_name: Path = make_plot_file_name('test', tag, normalize_setting)
+        plot_full_path = plot_file_name.absolute().__str__()
+        figure_file.write(f'![{plot_full_path}]({plot_full_path})')
 
-    plt.savefig(plot_file_name.absolute())
-    plt.show()
+        plt.savefig(plot_file_name.absolute())
+        plt.show()
 
     classif_report = classification_report(y_true=y_test, y_pred=y_predicted, labels=LABEL_LIST)
     print(classif_report)
@@ -412,11 +433,12 @@ print(datetime.datetime.now())
 for model, tag in models_and_tags:
     print('this is how we do against the training data, use to decide if we have overfit')
     print(train_y.value_counts())
-    conf_matrix_plt = plot_confusion_matrix(model, X=train_x_features, y_true=train_y, normalize=NORMALIZE_SETTING)
-    mdl_name = model.__class__.__name__
-    plt.title(f'Confusion matrix {mdl_name} {NORMALIZE_SETTING} train data')
-    plt.savefig(make_plot_file_name('train', tag))
+    for normalize_setting in ALL_NORMALIZE_SETTINGS:
+        conf_matrix_plt = plot_confusion_matrix(model, X=train_x_features, y_true=train_y, normalize=normalize_setting)
+        mdl_name = model.__class__.__name__
+        plt.title(f'Confusion matrix {mdl_name} {normalize_setting} train data')
+        plt.savefig(make_plot_file_name('train', tag, normalized_to=normalize_setting))
 
-    plt.show()
+        plt.show()
     print(classification_report(y_true=train_y, y_pred=model.predict(train_x_features)))
     print(datetime.datetime.today())
