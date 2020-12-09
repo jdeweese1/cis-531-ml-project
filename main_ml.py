@@ -45,7 +45,7 @@ ALL_NORMALIZE_SETTINGS = ['pred', 'true', 'all']
 WRITE_DEBUG_FILES = True
 
 # Begin feature selection settings
-SELECTIVELY_SAMPLE_TEST_SLICE = False
+SELECTIVELY_SAMPLE_TEST_SLICE = False # If set to true, we will attempt to adjust to have a less severe class imbalance in the test data.
 tfidf_text_colmun_name = 'cleaned_no_flags'
 #tfidf_text_colmun_name = 'cleaned_tweet'
 

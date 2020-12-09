@@ -1,6 +1,8 @@
 .ipynb_checkpoints/*
 *.csv
-classif_reports/test/*.txt
+classif_reports/test_smoted*/*.txt
+classif_reports/test/*.png
+classif_reports/test/*.md
 classif_reports/train/*.txt
 plots/test/*.png
 plots/train/*.png
